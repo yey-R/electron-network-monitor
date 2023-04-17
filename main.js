@@ -3,6 +3,8 @@ const path = require('path');
 const { netLog } = require('electron');
 const { saveEventsToFile, readEventsFromFile } = require("./utils.js");
 
+let events = [];
+
 process.on('unhandledRejection', (reason, promise) => {
     console.log('Unhandled Rejection at:', promise, 'reason:', reason);
   });
@@ -18,7 +20,7 @@ function createWindow() {
         }
     });
 
-    win.loadURL('https://ddosify.com');
+    win.loadURL('https://app.ddosify.com');
 
     // Prevent opening a new window for external links or redirects
     win.webContents.on('new-window', (event, url) => {
@@ -36,15 +38,15 @@ function createWindow() {
     });
 
     // Monitor network requests using webRequest API
-    win.webContents.session.webRequest.onCompleted({ urls: ['*://*/*'] }, (details) => {
-    const requestData = {
-        type: 'network-request',
-        url: details.url,
-        status: details.statusCode,
-        time: new Date(details.timeStamp)
-    };
-    console.log(requestData);
-    });
+    // win.webContents.session.webRequest.onCompleted({ urls: ['*://*/*'] }, (details) => {
+    // const requestData = {
+    //     type: 'network-request',
+    //     url: details.url,
+    //     status: details.statusCode,
+    //     time: new Date(details.timeStamp)
+    // };
+    // console.log(requestData);
+    // });
 
 }
   
@@ -65,8 +67,11 @@ app.on('activate', () => {
   }
 });
 
+app.on('before-quit', () => {
+  saveEventsToFile(events);
+});
 
-ipcMain.on('log-event', (event, data) => {
+ipcMain.on('event-list', (event, data) => {
     console.log(data);
-    saveEventsToFile(data);
+    events = data;    
 });

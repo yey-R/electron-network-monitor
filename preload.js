@@ -1,4 +1,6 @@
-const { ipcRenderer } = require('electron');
+const { ipcRenderer } = require("electron");
+
+let events = []
 
 // Function to get the XPath of an element
 function getElementXPath(elm) {
@@ -37,16 +39,32 @@ function getElementXPath(elm) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Log clicks
+  window.addEventListener('scroll', () => {
+    const scrollData = {
+      type: 'scroll',
+      position: window.scrollY,
+    };
+
+    const last_event = events[events.length - 1];
+    if (last_event.type === 'scroll') {
+      events[events.length - 1] = scrollData;
+    }
+    else {
+      events.push(scrollData);
+    }
+    ipcRenderer.send('event-list', events);
+  });  
+
   document.addEventListener('click', (event) => {
     const xpath = getElementXPath(event.target);
     const clickData = {
       type: 'click',
       target: event.target.tagName,
       xpath: xpath,
-      time: new Date()
     };
-    ipcRenderer.send('log-event', clickData);
+
+    events.push(clickData);
+    ipcRenderer.send('event-list', events);
   });
 
   // Log input events
@@ -57,8 +75,30 @@ window.addEventListener('DOMContentLoaded', () => {
       target: event.target.tagName,
       xpath: xpath,
       value: event.target.value,
-      time: new Date()
     };
-    ipcRenderer.send('log-event', inputData);
+
+    const last_event = events[events.length - 1];
+    if (last_event.type === 'input' && last_event.target === inputData.target) {
+      events[events.length - 1] = inputData;
+    }
+    else {
+      events.push(inputData);
+    }
+
+    ipcRenderer.send('event-list', events);
+  });
+
+  document.addEventListener('keydown', (event) => {    
+    const key_codes = ['Tab', 'ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Escape', 'F11', 'Space'];
+    
+    if (key_codes.includes(event.code)) {
+      const keyData = {
+        type: 'keypress',
+        key: event.code,
+      };
+
+      events.push(keyData);
+      ipcRenderer.send('event-list', events);
+    }
   });
 });

@@ -3,8 +3,10 @@ const fs = require('fs');
 
 function saveEventsToFile(events) {
     const filePath = path.join(__dirname, 'events-log.json');
-    fs.appendFileSync(filePath, JSON.stringify(events));
-    fs.appendFileSync(filePath, "\n");
+    events.forEach((action) => {
+        fs.appendFileSync(filePath, JSON.stringify(action));
+        fs.appendFileSync(filePath, "\n");
+    })
 }
 
 function readEventsFromFile() {
